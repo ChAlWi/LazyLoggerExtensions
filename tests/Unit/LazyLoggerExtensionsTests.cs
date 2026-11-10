@@ -397,10 +397,10 @@ public class LazyLoggerExtensionsTests
         var logger = CreateLogger( LogLevel.Debug, entries );
 
         // Act
-        logger.LogDebug( () => "Dies ist ein Test für {DebugLevel}", "DebugLevel" );
+        logger.LogDebug( () => "This is a test for {DebugLevel}", "DebugLevel" );
 
         // Assert
-        entries.Single().Message.ShouldBe( "Dies ist ein Test für DebugLevel" );
+        entries.Single().Message.ShouldBe( "This is a test for DebugLevel" );
     }
 
     [Fact]

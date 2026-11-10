@@ -1,28 +1,27 @@
-# ADR-0001: Abhängigkeit auf Microsoft.Extensions.Logging.Abstractions
+# ADR-0001: Dependency on Microsoft.Extensions.Logging.Abstractions
 
-- Status: **Vorgeschlagen** (wartet auf Freigabe, nichts installiert)
-- Betrifft: `src/LazyLoggerExtensions.csproj`
+- Status: **Proposed** (awaiting approval)
+- Affects: `src/LazyLoggerExtensions.csproj`
 
-## Kontext
+## Context
 
-Die Library erweitert `ILogger` um Lazy-Overloads. Dafür werden `ILogger`, `LogLevel`, `EventId` und die
-Framework-Extension `LoggerExtensions.Log(...)` benötigt, die Message-Templates formatiert und
-Structured-Logging-Properties erzeugt.
+The library extends `ILogger` with lazy overloads. This requires `ILogger`, `LogLevel`, `EventId` and the framework
+extension `LoggerExtensions.Log(...)`, which formats message templates and produces structured logging properties.
 
-## Alternativen
+## Alternatives
 
-| Option | Lizenz | Kommerziell nutzbar | Bewertung |
+| Option | License | Commercial use | Assessment |
 | --- | --- | --- | --- |
-| **A: Microsoft.Extensions.Logging.Abstractions 10.0.14** | MIT | ja | Standard-Abstraktion; `ILogger` ist ohne das Paket nicht verfügbar |
-| B: Kein Paket / selbst implementieren | – | – | Nicht möglich: eigenes `ILogger` wäre mit keinem Logging-Provider kompatibel |
-| C: Serilog (`ILogger`/`Log.Logger`) | Apache 2.0 | ja | Bindet Consumer an Serilog statt an die Framework-Abstraktion |
+| **A: Microsoft.Extensions.Logging.Abstractions 10.0.14** | MIT | yes | Standard abstraction; `ILogger` is not available without the package |
+| B: No package / implement ourselves | – | – | Not possible: a custom `ILogger` would be compatible with no logging provider |
+| C: Serilog (`ILogger`/`Log.Logger`) | Apache 2.0 | yes | Ties consumers to Serilog instead of the framework abstraction |
 
-## Lizenzprüfung
+## License review
 
-Verifiziert an der `.nuspec` im lokalen NuGet-Cache (`license type="expression"`: MIT, Repository
-`github.com/dotnet/dotnet`). Die LICENSE-Datei im GitHub-Repository und die NuGet-Seite sind noch vom Entwickler
-gegenzuprüfen (offline nicht verifizierbar).
+Verified against the `.nuspec` in the local NuGet cache (`license type="expression"`: MIT, repository
+`github.com/dotnet/dotnet`). The LICENSE file in the GitHub repository and the NuGet page still have to be
+cross-checked by the developer (not verifiable offline).
 
-## Entscheidung (Vorschlag)
+## Decision (proposal)
 
-Option A, Version **10.0.14** gepinnt über `Directory.Packages.props`.
+Option A, version **10.0.14**, pinned via `Directory.Packages.props`.

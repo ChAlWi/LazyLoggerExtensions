@@ -1,28 +1,28 @@
-# ADR-0004: Assertions mit Shouldly
+# ADR-0004: Assertions with Shouldly
 
-- Status: **Vorgeschlagen** (wartet auf Freigabe, nichts installiert)
-- Betrifft: `tests/Unit/LazyLoggerExtensions.Tests.csproj`
+- Status: **Proposed** (awaiting approval)
+- Affects: `tests/Unit/LazyLoggerExtensions.Tests.csproj`
 
-## Alternativen
+## Alternatives
 
-| Option | Lizenz | Kommerziell nutzbar | Bewertung |
+| Option | License | Commercial use | Assessment |
 | --- | --- | --- | --- |
-| **A: Shouldly 4.3.0** | BSD-3-Clause | ja | Laut `tests/CLAUDE.md` verbindlich, Ersatz für FluentAssertions |
-| B: Kein Paket / `Xunit.Assert` | Apache-2.0 (Teil von xUnit) | ja | Kein zusätzliches Paket, aber widerspricht dem verbindlichen Tooling |
-| C: FluentAssertions ab v8 | kommerziell | nein | Sofortiger Ausschluss (Lizenzfilter) |
-| D: AwesomeAssertions | Apache-2.0 | ja | Fork von FluentAssertions, nicht Projektstandard |
+| **A: Shouldly 4.3.0** | BSD-3-Clause | yes | Mandatory per `tests/CLAUDE.md`, replacement for FluentAssertions |
+| B: No package / `Xunit.Assert` | Apache-2.0 (part of xUnit) | yes | No additional package, but contradicts the mandatory tooling |
+| C: FluentAssertions v8 and later | commercial | no | Immediate exclusion (license filter) |
+| D: AwesomeAssertions | Apache-2.0 | yes | Fork of FluentAssertions, not the project standard |
 
-## Lizenzprüfung
+## License review
 
-Verifiziert an der `.nuspec` im lokalen NuGet-Cache (BSD-3-Clause, Repository `github.com/shouldly/shouldly`).
-Transitive Abhängigkeiten sind vor Freigabe zu prüfen. GitHub-LICENSE und NuGet-Seite sind noch vom
-Entwickler gegenzuprüfen.
+Verified against the `.nuspec` in the local NuGet cache (BSD-3-Clause, repository `github.com/shouldly/shouldly`).
+Transitive dependencies must be reviewed before approval. The GitHub LICENSE file and the NuGet page still have to be
+cross-checked by the developer.
 
-## Entscheidung (Vorschlag)
+## Decision (proposal)
 
-Option A, Version **4.3.0** gepinnt.
+Option A, version **4.3.0**, pinned.
 
-## Nicht Teil dieses Vorschlags
+## Not part of this proposal
 
-AutoFixture (`tests/CLAUDE.md`) wird vorerst nicht eingeführt: Alle Testwerte sind hier inhaltlich relevant
-(Message-Templates, Level, Overload-Variante). Bei Bedarf eigener ADR.
+AutoFixture (`tests/CLAUDE.md`) is not introduced for now: all test values are relevant to the test content
+(message templates, level, overload variant). A separate ADR if needed.

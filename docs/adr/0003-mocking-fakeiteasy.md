@@ -1,28 +1,28 @@
-# ADR-0003: Mocking mit FakeItEasy
+# ADR-0003: Mocking with FakeItEasy
 
-- Status: **Vorgeschlagen** (wartet auf Freigabe, nichts installiert)
-- Betrifft: `tests/Unit/LazyLoggerExtensions.Tests.csproj`
+- Status: **Proposed** (awaiting approval)
+- Affects: `tests/Unit/LazyLoggerExtensions.Tests.csproj`
 
-## Kontext
+## Context
 
-`ILogger` muss in Tests ersetzt werden, um Aufrufe (Level, EventId, Exception, State, formatierte Message)
-zu beobachten.
+`ILogger` must be replaced in tests in order to observe calls (level, EventId, exception, state, formatted
+message).
 
-## Alternativen
+## Alternatives
 
-| Option | Lizenz | Kommerziell nutzbar | Bewertung |
+| Option | License | Commercial use | Assessment |
 | --- | --- | --- | --- |
-| **A: FakeItEasy 9.0.1** | MIT | ja | Laut `tests/CLAUDE.md` verbindlich |
-| B: Kein Paket / selbst implementieren | – | – | Handgeschriebener `TestLogger : ILogger` möglich, aber mehr Wartung und ohne Fake-Konventionen des Projekts |
-| C: Moq | BSD-3-Clause | ja | Laut `tests/CLAUDE.md` ausgeschlossen |
-| D: NSubstitute | BSD-2-Clause | ja | Laut `tests/CLAUDE.md` ausgeschlossen |
+| **A: FakeItEasy 9.0.1** | MIT | yes | Mandatory per `tests/CLAUDE.md` |
+| B: No package / implement ourselves | – | – | A hand-written `TestLogger : ILogger` is possible, but needs more maintenance and does not follow the project's fake conventions |
+| C: Moq | BSD-3-Clause | yes | Excluded per `tests/CLAUDE.md` |
+| D: NSubstitute | BSD-2-Clause | yes | Excluded per `tests/CLAUDE.md` |
 
-## Lizenzprüfung
+## License review
 
-Verifiziert an der `.nuspec` im lokalen NuGet-Cache (MIT, Repository `github.com/FakeItEasy/FakeItEasy`).
-Transitive Abhängigkeiten (u. a. Castle.Core) sind vor Freigabe zu prüfen. GitHub-LICENSE und NuGet-Seite
-sind noch vom Entwickler gegenzuprüfen.
+Verified against the `.nuspec` in the local NuGet cache (MIT, repository `github.com/FakeItEasy/FakeItEasy`).
+Transitive dependencies (e.g. Castle.Core) must be reviewed before approval. The GitHub LICENSE file and the NuGet
+page still have to be cross-checked by the developer.
 
-## Entscheidung (Vorschlag)
+## Decision (proposal)
 
-Option A, Version **9.0.1** gepinnt.
+Option A, version **9.0.1**, pinned.

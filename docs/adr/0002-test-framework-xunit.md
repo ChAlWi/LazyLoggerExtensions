@@ -1,32 +1,32 @@
-# ADR-0002: Test-Framework xUnit inkl. Test-SDK und Runner
+# ADR-0002: Test framework xUnit incl. test SDK and runner
 
-- Status: **Vorgeschlagen** (wartet auf Freigabe, nichts installiert)
-- Betrifft: `tests/Unit/LazyLoggerExtensions.Tests.csproj`
+- Status: **Proposed** (awaiting approval)
+- Affects: `tests/Unit/LazyLoggerExtensions.Tests.csproj`
 
-## Pakete
+## Packages
 
-| Paket | Version | Lizenz |
+| Package | Version | License |
 | --- | --- | --- |
 | xunit | 2.9.3 | Apache-2.0 |
 | xunit.runner.visualstudio | 3.1.5 | Apache-2.0 |
 | Microsoft.NET.Test.Sdk | 18.8.1 | MIT |
 
-## Alternativen
+## Alternatives
 
-| Option | Lizenz | Kommerziell nutzbar | Bewertung |
+| Option | License | Commercial use | Assessment |
 | --- | --- | --- | --- |
-| **A: xUnit 2.9.3** | Apache-2.0 | ja | Laut `tests/CLAUDE.md` verbindlich, `dotnet test` direkt lauffähig |
-| B: Kein Paket / selbst implementieren | – | – | Eigener Test-Runner mit `dotnet test`-Integration ist unverhältnismäßig |
-| C: NUnit | MIT | ja | Funktioniert, widerspricht aber dem verbindlichen Tooling |
-| D: xunit.v3 | Apache-2.0 | ja | Neuere Generation, nicht der aktuelle Projektstandard |
+| **A: xUnit 2.9.3** | Apache-2.0 | yes | Mandatory per `tests/CLAUDE.md`, works directly with `dotnet test` |
+| B: No package / implement ourselves | – | – | A custom test runner with `dotnet test` integration is disproportionate |
+| C: NUnit | MIT | yes | Works, but contradicts the mandatory tooling |
+| D: xunit.v3 | Apache-2.0 | yes | Newer generation, not the current project standard |
 
-`Microsoft.NET.Test.Sdk` und `xunit.runner.visualstudio` sind für `dotnet test` mit xUnit technisch erforderlich.
+`Microsoft.NET.Test.Sdk` and `xunit.runner.visualstudio` are technically required for `dotnet test` with xUnit.
 
-## Lizenzprüfung
+## License review
 
-Verifiziert an den `.nuspec`-Dateien im lokalen NuGet-Cache. GitHub-LICENSE und NuGet-Seite sind noch vom
-Entwickler gegenzuprüfen.
+Verified against the `.nuspec` files in the local NuGet cache. The GitHub LICENSE files and the NuGet pages still have
+to be cross-checked by the developer.
 
-## Entscheidung (Vorschlag)
+## Decision (proposal)
 
-Option A mit den oben genannten, gepinnten Versionen.
+Option A with the pinned versions listed above.
