@@ -29,7 +29,8 @@ _logger.LogDebug(() => $"Komplexes Objekt: {JsonSerializer.Serialize(bigObject)}
 
 ## Verwendung
 
-Kein zusätzliches `using` erforderlich – die Klasse liegt im selben Namespace:
+Kein zusätzliches `using` erforderlich – die Klasse liegt im Namespace `Microsoft.Extensions.Logging`
+(dem Namespace von `ILogger`):
 
 ```csharp
 // Einfache Nachricht
@@ -45,22 +46,33 @@ logger.LogWarning(new EventId(42, "TimeoutWarning"), () => "Timeout nach {Second
 logger.LogCritical(new EventId(99), ex, () => "Kritischer Fehler: {Detail}", detail);
 ```
 
+### Hinweise zur Verwendung
+
+- **Die Message ist ein Template.** Wird die Factory zusammen mit `args` aufgerufen, parst das Framework den
+  Text nach `{Platzhaltern}`. Geschweifte Klammern in interpolierten Werten (z. B. JSON) können dann als
+  Platzhalter missverstanden werden. Ohne `args` wird der Text unverändert geloggt.
+- **Das Lambda selbst ist nicht kostenlos.** Ein Lambda, das Variablen einfängt (Closure), allokiert auch bei
+  deaktiviertem Level. Der Vorteil liegt im Vermeiden der teuren *Message-Erzeugung*, nicht in einer
+  allokationsfreien Aufrufstelle. Mit `static () => ...` ohne Captures entfällt auch die Allokation.
+- **Exceptions in der Factory** werden nicht abgefangen, sondern an den Aufrufer weitergereicht.
+
 ---
 
 ## Unterstützte LogLevel und Overloads
 
-Alle 6 LogLevel werden vollständig unterstützt:
+Alle 6 LogLevel (`Trace`, `Debug`, `Information`, `Warning`, `Error`, `Critical`) bieten dieselben
+**8 Overloads** (`Log<Level>`), insgesamt also 48 öffentliche Methoden:
 
-| Level | Ohne Exception | Mit Exception | Mit EventId | Mit EventId + Exception |
-|---|:---:|:---:|:---:|:---:|
-| Trace | ✅ | ✅ | ✅ | ✅ |
-| Debug | ✅ | ✅ | ✅ | ✅ |
-| Information | ✅ | ✅ | ✅ | ✅ |
-| Warning | ✅ | ✅ | ✅ | ✅ |
-| Error | ✅ | ✅ | ✅ | ✅ |
-| Critical | ✅ | ✅ | ✅ | ✅ |
-
-Jeder Overload ist zusätzlich mit `params object?[] args` verfügbar.
+| # | Parameter (nach `this ILogger logger`) |
+|---|---|
+| 1 | `Func<string> messageFactory` |
+| 2 | `Func<string> messageFactory, params object?[] args` |
+| 3 | `EventId eventId, Func<string> messageFactory` |
+| 4 | `EventId eventId, Func<string> messageFactory, params object?[] args` |
+| 5 | `Exception exception, Func<string> messageFactory` |
+| 6 | `Exception exception, Func<string> messageFactory, params object?[] args` |
+| 7 | `EventId eventId, Exception exception, Func<string> messageFactory` |
+| 8 | `EventId eventId, Exception exception, Func<string> messageFactory, params object?[] args` |
 
 ---
 
@@ -70,7 +82,8 @@ Jeder Overload ist zusätzlich mit `params object?[] args` verfügbar.
 |---|---|
 | Namespace | `Microsoft.Extensions.Logging` |
 | Klassenname | `LazyLoggerExtensions` |
-| Zieldatei | `src/LoggerExtensions.Lazy.cs` |
+| Quelldatei | `src/LoggerExtensions.Lazy.cs` |
+| Projekt | `src/LazyLoggerExtensions.csproj` |
 | Target Framework | .NET 10 |
 | NuGet-Abhängigkeit | `Microsoft.Extensions.Logging.Abstractions` 10.0.14 (siehe [ADR-0001](adr/0001-logging-abstractions.md)) |
 
@@ -93,11 +106,15 @@ Datei: `tests/Unit/LazyLoggerExtensionsTests.cs`
 Framework: xUnit + FakeItEasy + Shouldly (siehe [ADR-0002](adr/0002-test-framework-xunit.md),
 [ADR-0003](adr/0003-mocking-fakeiteasy.md), [ADR-0004](adr/0004-assertions-shouldly.md))
 
-Ausführen:
+Ausführen (aktuell 578 Tests, alle grün):
 
 ```bash
 dotnet test LazyLoggerExtensions.slnx
 ```
+
+Ist der private NuGet-Feed nicht erreichbar (z. B. ohne VPN), erscheint die Warnung `NU1900`
+(Sicherheitsprüfung nicht möglich). Sie ist bewusst nur eine Warnung; Restore und Tests laufen mit den
+Paketen aus dem lokalen Cache.
 
 Testabdeckung (jeweils für **alle 48 Overloads**):
 - ✅ Factory wird **nicht** aufgerufen und nichts geschrieben, wenn Level deaktiviert
@@ -106,6 +123,34 @@ Testabdeckung (jeweils für **alle 48 Overloads**):
 - ✅ Benannte Platzhalter und `{OriginalFormat}` als Structured-Logging-State
 - ✅ Null-Guard: `logger`, `messageFactory`, `exception` (auch bei deaktiviertem Level)
 - ✅ Factory gibt `null` zurück → `InvalidOperationException`
+
+---
+
+## Projektstruktur
+
+```
+LazyLoggerExtensions.slnx
+Directory.Build.props        ← gemeinsame Einstellungen (net10.0, Nullable, Warnungen als Fehler)
+Directory.Packages.props     ← zentrale, gepinnte Paketversionen
+src/                         ← Library
+tests/Unit/                  ← xUnit-Tests
+docs/                        ← Dokumentation und ADRs
+```
+
+---
+
+## Architekturentscheidungen (ADR)
+
+Neue NuGet-Pakete benötigen einen ADR (siehe `src/CLAUDE.md`).
+
+| ADR | Thema | Status |
+|---|---|---|
+| [0001](adr/0001-logging-abstractions.md) | Microsoft.Extensions.Logging.Abstractions | Vorgeschlagen, Pakete installiert |
+| [0002](adr/0002-test-framework-xunit.md) | xUnit, Test-SDK, Runner | Vorgeschlagen, Pakete installiert |
+| [0003](adr/0003-mocking-fakeiteasy.md) | FakeItEasy | Vorgeschlagen, Pakete installiert |
+| [0004](adr/0004-assertions-shouldly.md) | Shouldly | Vorgeschlagen, Pakete installiert |
+
+Offen: Gegenprüfung der Lizenzen auf NuGet-Seite und GitHub-LICENSE sowie der transitiven Abhängigkeiten.
 
 ---
 
