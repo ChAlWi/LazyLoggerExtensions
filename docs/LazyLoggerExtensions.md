@@ -84,7 +84,8 @@ All 6 log levels (`Trace`, `Debug`, `Information`, `Warning`, `Error`, `Critical
 | Class name | `LazyLoggerExtensions` |
 | Source file | `src/LoggerExtensions.Lazy.cs` |
 | Project | `src/LazyLoggerExtensions.csproj` |
-| Target framework | .NET 10 |
+| Target framework | .NET 10 (usable from .NET 10 and later) |
+| NuGet package | `LazyLoggerExtensions` 1.0.0 (`dotnet pack src/LazyLoggerExtensions.csproj -c Release`) |
 | NuGet dependency | `Microsoft.Extensions.Logging.Abstractions` 10.0.14 (see [ADR-0001](adr/0001-logging-abstractions.md)) |
 | License | MIT (see [LICENSE](../LICENSE)) |
 
