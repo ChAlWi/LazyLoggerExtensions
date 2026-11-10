@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/LazyLoggerExtensions.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <File Path="tests/Claude.md" />
+  </Folder>
+  <Folder Name="/tests/Unit/">
+    <Project Path="tests/Unit/LazyLoggerExtensions.Tests.csproj" />
+  </Folder>
+</Solution>

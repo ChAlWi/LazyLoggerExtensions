@@ -1,110 +1,168 @@
-# LazyLoggerExtensions – Dokumentation
+# LazyLoggerExtensions – Documentation
 
-## Übersicht
+## Overview
 
-`LazyLoggerExtensions` erweitert `Microsoft.Extensions.Logging.ILogger` um Overloads,
-die einen `Func<string>`-Delegate (Factory) als Message-Parameter akzeptieren.
-Der Delegate wird **nur aufgerufen, wenn der entsprechende LogLevel aktiv ist**
-(Lazy Evaluation / Short-Circuit).
-
----
-
-## Problem, das gelöst wird
-
-Standard-Logging evaluiert den Message-String **immer**, selbst wenn der LogLevel deaktiviert ist:
-
-```csharp
-// SCHLECHT: teurer String wird immer aufgebaut
-_logger.LogDebug($"Komplexes Objekt: {JsonSerializer.Serialize(bigObject)}");
-```
-
-Mit `LazyLoggerExtensions` wird der String nur erzeugt, wenn er tatsächlich geloggt wird:
-
-```csharp
-// GUT: String wird NUR bei aktivem Debug-Level erzeugt
-_logger.LogDebug(() => $"Komplexes Objekt: {JsonSerializer.Serialize(bigObject)}");
-```
+`LazyLoggerExtensions` extends `Microsoft.Extensions.Logging.ILogger` with overloads that accept a
+`Func<string>` delegate (factory) as the message parameter.
+The delegate is **only invoked when the corresponding log level is enabled**
+(lazy evaluation / short-circuit).
 
 ---
 
-## Verwendung
+## Problem solved
 
-Kein zusätzliches `using` erforderlich – die Klasse liegt im selben Namespace:
+Standard logging **always** evaluates the message string, even when the log level is disabled:
 
 ```csharp
-// Einfache Nachricht
-logger.LogDebug(() => "Dies ist ein Test für {DebugLevel}", "DebugLevel");
+// BAD: the expensive string is always built
+_logger.LogDebug($"Complex object: {JsonSerializer.Serialize(bigObject)}");
+```
 
-// Mit Exception
-logger.LogError(ex, () => "Fehler in Methode {Method}", nameof(MyMethod));
+With `LazyLoggerExtensions` the string is only created when it is actually logged:
 
-// Mit EventId
-logger.LogWarning(new EventId(42, "TimeoutWarning"), () => "Timeout nach {Seconds}s", 30);
-
-// Mit EventId + Exception
-logger.LogCritical(new EventId(99), ex, () => "Kritischer Fehler: {Detail}", detail);
+```csharp
+// GOOD: the string is built ONLY when the Debug level is enabled
+_logger.LogDebug(() => $"Complex object: {JsonSerializer.Serialize(bigObject)}");
 ```
 
 ---
 
-## Unterstützte LogLevel und Overloads
+## Usage
 
-Alle 6 LogLevel werden vollständig unterstützt:
+No additional `using` is required – the class lives in the `Microsoft.Extensions.Logging` namespace
+(the namespace of `ILogger`):
 
-| Level | Ohne Exception | Mit Exception | Mit EventId | Mit EventId + Exception |
-|---|:---:|:---:|:---:|:---:|
-| Trace | ✅ | ✅ | ✅ | ✅ |
-| Debug | ✅ | ✅ | ✅ | ✅ |
-| Information | ✅ | ✅ | ✅ | ✅ |
-| Warning | ✅ | ✅ | ✅ | ✅ |
-| Error | ✅ | ✅ | ✅ | ✅ |
-| Critical | ✅ | ✅ | ✅ | ✅ |
+```csharp
+// Simple message
+logger.LogDebug(() => "This is a test for {DebugLevel}", "DebugLevel");
 
-Jeder Overload ist zusätzlich mit `params object?[] args` verfügbar.
+// With exception
+logger.LogError(ex, () => "Error in method {Method}", nameof(MyMethod));
+
+// With EventId
+logger.LogWarning(new EventId(42, "TimeoutWarning"), () => "Timeout after {Seconds}s", 30);
+
+// With EventId + exception
+logger.LogCritical(new EventId(99), ex, () => "Critical error: {Detail}", detail);
+```
+
+### Usage notes
+
+- **The message is a template.** When the factory is called together with `args`, the framework parses the text for
+  `{placeholders}`. Curly braces in interpolated values (e.g. JSON) may then be mistaken for placeholders.
+  Without `args` the text is logged unchanged.
+- **The lambda itself is not free.** A lambda that captures variables (closure) allocates even when the level is
+  disabled. The benefit is avoiding the expensive *message creation*, not an allocation-free call site.
+  With `static () => ...` and no captures the allocation is avoided as well.
+- **Exceptions thrown by the factory** are not caught but propagate to the caller.
 
 ---
 
-## Technische Details
+## Supported log levels and overloads
 
-| Eigenschaft | Wert |
+All 6 log levels (`Trace`, `Debug`, `Information`, `Warning`, `Error`, `Critical`) provide the same
+**8 overloads** (`Log<Level>`), i.e. 48 public methods in total:
+
+| # | Parameters (after `this ILogger logger`) |
+|---|---|
+| 1 | `Func<string> messageFactory` |
+| 2 | `Func<string> messageFactory, params object?[] args` |
+| 3 | `EventId eventId, Func<string> messageFactory` |
+| 4 | `EventId eventId, Func<string> messageFactory, params object?[] args` |
+| 5 | `Exception exception, Func<string> messageFactory` |
+| 6 | `Exception exception, Func<string> messageFactory, params object?[] args` |
+| 7 | `EventId eventId, Exception exception, Func<string> messageFactory` |
+| 8 | `EventId eventId, Exception exception, Func<string> messageFactory, params object?[] args` |
+
+---
+
+## Technical details
+
+| Property | Value |
 |---|---|
 | Namespace | `Microsoft.Extensions.Logging` |
-| Klassenname | `LazyLoggerExtensions` |
-| Zieldatei | `LoggerExtensions.Lazy.cs` |
-| Target Framework | .NET 8 / C# 12 |
-| NuGet-Abhängigkeit | `Microsoft.Extensions.Logging.Abstractions` |
+| Class name | `LazyLoggerExtensions` |
+| Source file | `src/LoggerExtensions.Lazy.cs` |
+| Project | `src/LazyLoggerExtensions.csproj` |
+| Target framework | .NET 10 |
+| NuGet dependency | `Microsoft.Extensions.Logging.Abstractions` 10.0.14 (see [ADR-0001](adr/0001-logging-abstractions.md)) |
+| License | MIT (see [LICENSE](../LICENSE)) |
 
-### Sicherheitsmerkmale
+The message is a **message template** (`{Name}` placeholders, not `{0}`). It is formatted by the framework
+extension `ILogger.Log(...)`; named placeholders end up as structured logging properties.
 
-- **`ArgumentNullException`** bei `logger = null` oder `messageFactory = null`
-- **`ArgumentNullException`** bei `exception = null` in Exception-Overloads
-- **`InvalidOperationException`** wenn `messageFactory()` `null` zurückgibt
-- **`[StackTraceHidden]`** auf allen public Methoden (saubere Stack Traces)
-- **Kein doppeltes Array-Wrapping** – `ILogger.Log<TState>` wird direkt aufgerufen
+### Safety features
+
+- **`ArgumentNullException`** for `logger = null` or `messageFactory = null`
+- **`ArgumentNullException`** for `exception = null` in the exception overloads
+- **`InvalidOperationException`** when `messageFactory()` returns `null`
+- **`[StackTraceHidden]`** on all public methods (clean stack traces)
+- **No double array wrapping** – the `args` array is passed unchanged to `ILogger.Log(...)`
 
 ---
 
 ## Tests
 
-Datei: `LoggerExtensions.Lazy.Tests.cs`  
-Framework: xUnit + Moq
+File: `tests/Unit/LazyLoggerExtensionsTests.cs`  
+Framework: xUnit + FakeItEasy + Shouldly (see [ADR-0002](adr/0002-test-framework-xunit.md),
+[ADR-0003](adr/0003-mocking-fakeiteasy.md), [ADR-0004](adr/0004-assertions-shouldly.md))
 
-Testabdeckung:
-- ✅ Delegate wird **nicht** aufgerufen wenn Level deaktiviert (alle 6 Level)
-- ✅ Delegate wird aufgerufen wenn Level aktiv (alle 6 Level)
-- ✅ Exception-Overloads (Error, Critical, Warning)
-- ✅ Null-Guard: `logger`, `messageFactory`, `exception`
-- ✅ Factory gibt `null` zurück → `InvalidOperationException`
+Run (currently 578 tests, all green):
+
+```bash
+dotnet test LazyLoggerExtensions.slnx
+```
+
+If the private NuGet feed is unreachable (e.g. without VPN), the warning `NU1900`
+(security audit not possible) appears. It is intentionally only a warning; restore and tests run with the
+packages from the local cache.
+
+Test coverage (each for **all 48 overloads**):
+- ✅ Factory is **not** invoked and nothing is written when the level is disabled
+- ✅ Factory is invoked exactly once when the level is enabled
+- ✅ Level, EventId, exception and formatted message in the written entry
+- ✅ Named placeholders and `{OriginalFormat}` as structured logging state
+- ✅ Null guards: `logger`, `messageFactory`, `exception` (also when the level is disabled)
+- ✅ Factory returns `null` → `InvalidOperationException`
 
 ---
 
-## QA-Status
+## Project structure
 
-| Bug | Beschreibung | Status |
+```
+LazyLoggerExtensions.slnx
+Directory.Build.props        ← shared settings (net10.0, nullable, warnings as errors)
+Directory.Packages.props     ← central, pinned package versions
+src/                         ← library
+tests/Unit/                  ← xUnit tests
+docs/                        ← documentation and ADRs
+```
+
+---
+
+## Architecture decisions (ADR)
+
+New NuGet packages require an ADR (see `src/CLAUDE.md`).
+
+| ADR | Topic | Status |
 |---|---|---|
-| BUG-01 | Null-Return Factory → `InvalidOperationException` | ✅ Behoben |
-| BUG-02 | Klassenname-Kollision → `LazyLoggerExtensions` | ✅ Behoben |
-| BUG-03 | Exception-Overloads für Trace/Info/Warning fehlten | ✅ Behoben |
-| BUG-04 | `params`-Array-Wrapping brach Structured Logging | ✅ Behoben |
+| [0001](adr/0001-logging-abstractions.md) | Microsoft.Extensions.Logging.Abstractions | Proposed, packages installed |
+| [0002](adr/0002-test-framework-xunit.md) | xUnit, test SDK, runner | Proposed, packages installed |
+| [0003](adr/0003-mocking-fakeiteasy.md) | FakeItEasy | Proposed, packages installed |
+| [0004](adr/0004-assertions-shouldly.md) | Shouldly | Proposed, packages installed |
 
-**Gesamtstatus: ✅ GO – Freigegeben für Produktion**
+Open: cross-checking the licenses on the NuGet page and the GitHub LICENSE file, as well as the transitive
+dependencies.
+
+---
+
+## QA status
+
+| Bug | Description | Status |
+|---|---|---|
+| BUG-01 | Factory returning null → `InvalidOperationException` | ✅ Fixed |
+| BUG-02 | Class name collision → `LazyLoggerExtensions` | ✅ Fixed |
+| BUG-03 | Exception overloads for Trace/Info/Warning were missing | ✅ Fixed |
+| BUG-04 | `params` array wrapping broke structured logging | ✅ Fixed |
+| BUG-05 | `string.Format` threw `FormatException` for named placeholders (`{Name}`) and lost structured logging | ✅ Fixed (regression tests) |
+| BUG-06 | `exception = null` was not checked in the exception overloads | ✅ Fixed |
