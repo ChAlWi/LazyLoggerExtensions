@@ -70,9 +70,12 @@ Jeder Overload ist zusätzlich mit `params object?[] args` verfügbar.
 |---|---|
 | Namespace | `Microsoft.Extensions.Logging` |
 | Klassenname | `LazyLoggerExtensions` |
-| Zieldatei | `LoggerExtensions.Lazy.cs` |
-| Target Framework | .NET 8 / C# 12 |
-| NuGet-Abhängigkeit | `Microsoft.Extensions.Logging.Abstractions` |
+| Zieldatei | `src/LoggerExtensions.Lazy.cs` |
+| Target Framework | .NET 10 |
+| NuGet-Abhängigkeit | `Microsoft.Extensions.Logging.Abstractions` 10.0.14 (siehe [ADR-0001](adr/0001-logging-abstractions.md)) |
+
+Die Message ist ein **Message-Template** (`{Name}`-Platzhalter, kein `{0}`). Sie wird von der
+Framework-Extension `ILogger.Log(...)` formatiert; benannte Platzhalter landen als Structured-Logging-Properties.
 
 ### Sicherheitsmerkmale
 
@@ -80,20 +83,28 @@ Jeder Overload ist zusätzlich mit `params object?[] args` verfügbar.
 - **`ArgumentNullException`** bei `exception = null` in Exception-Overloads
 - **`InvalidOperationException`** wenn `messageFactory()` `null` zurückgibt
 - **`[StackTraceHidden]`** auf allen public Methoden (saubere Stack Traces)
-- **Kein doppeltes Array-Wrapping** – `ILogger.Log<TState>` wird direkt aufgerufen
+- **Kein doppeltes Array-Wrapping** – das `args`-Array wird unverändert an `ILogger.Log(...)` übergeben
 
 ---
 
 ## Tests
 
-Datei: `LoggerExtensions.Lazy.Tests.cs`  
-Framework: xUnit + Moq
+Datei: `tests/Unit/LazyLoggerExtensionsTests.cs`  
+Framework: xUnit + FakeItEasy + Shouldly (siehe [ADR-0002](adr/0002-test-framework-xunit.md),
+[ADR-0003](adr/0003-mocking-fakeiteasy.md), [ADR-0004](adr/0004-assertions-shouldly.md))
 
-Testabdeckung:
-- ✅ Delegate wird **nicht** aufgerufen wenn Level deaktiviert (alle 6 Level)
-- ✅ Delegate wird aufgerufen wenn Level aktiv (alle 6 Level)
-- ✅ Exception-Overloads (Error, Critical, Warning)
-- ✅ Null-Guard: `logger`, `messageFactory`, `exception`
+Ausführen:
+
+```bash
+dotnet test LazyLoggerExtensions.slnx
+```
+
+Testabdeckung (jeweils für **alle 48 Overloads**):
+- ✅ Factory wird **nicht** aufgerufen und nichts geschrieben, wenn Level deaktiviert
+- ✅ Factory wird genau einmal aufgerufen, wenn Level aktiv
+- ✅ Level, EventId, Exception und formatierte Message im geschriebenen Eintrag
+- ✅ Benannte Platzhalter und `{OriginalFormat}` als Structured-Logging-State
+- ✅ Null-Guard: `logger`, `messageFactory`, `exception` (auch bei deaktiviertem Level)
 - ✅ Factory gibt `null` zurück → `InvalidOperationException`
 
 ---
@@ -106,5 +117,5 @@ Testabdeckung:
 | BUG-02 | Klassenname-Kollision → `LazyLoggerExtensions` | ✅ Behoben |
 | BUG-03 | Exception-Overloads für Trace/Info/Warning fehlten | ✅ Behoben |
 | BUG-04 | `params`-Array-Wrapping brach Structured Logging | ✅ Behoben |
-
-**Gesamtstatus: ✅ GO – Freigegeben für Produktion**
+| BUG-05 | `string.Format` warf `FormatException` bei benannten Platzhaltern (`{Name}`) und verlor Structured Logging | ✅ Behoben (Regressionstests) |
+| BUG-06 | `exception = null` wurde in Exception-Overloads nicht geprüft | ✅ Behoben |
